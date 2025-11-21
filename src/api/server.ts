@@ -54,7 +54,7 @@ fastify.register(async function (fastify) {
         console.log('Client connected to WebSocket');
 
         // Expect client to send orderId to subscribe
-        connection.socket.on('message', async (message: any) => {
+        connection.on('message', async (message: any) => {
             try {
                 const { orderId } = JSON.parse(message.toString());
                 if (orderId) {
@@ -68,18 +68,18 @@ fastify.register(async function (fastify) {
 
                     subscriber.on('message', (ch, msg) => {
                         if (ch === channel) {
-                            connection.socket.send(msg);
+                            connection.send(msg);
                         }
                     });
 
                     // Send current status immediately
                     const order = await prisma.order.findUnique({ where: { id: orderId } });
                     if (order) {
-                        connection.socket.send(JSON.stringify({ orderId, status: order.status, txHash: order.txHash }));
+                        connection.send(JSON.stringify({ orderId, status: order.status, txHash: order.txHash }));
                     }
 
                     // Cleanup on close
-                    connection.socket.on('close', () => {
+                    connection.on('close', () => {
                         subscriber.unsubscribe();
                         subscriber.quit();
                     });

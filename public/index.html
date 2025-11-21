@@ -4,361 +4,757 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Execution Engine</title>
+    <title>Order Execution Engine - Testing Dashboard</title>
     <style>
-        :root {
-            --primary: #2563eb;
-            /* Blue */
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text: #1e293b;
-            --border: #e2e8f0;
-            --success: #10b981;
-            --error: #ef4444;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            margin: 0;
             padding: 20px;
         }
 
         .container {
-            background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 480px;
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
         h1 {
-            margin-top: 0;
-            font-size: 1.5rem;
-            color: var(--text);
-            margin-bottom: 1.5rem;
+            color: white;
             text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
         }
 
         .form-group {
-            margin-bottom: 1rem;
+            margin-bottom: 15px;
         }
 
         label {
             display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            font-size: 0.875rem;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 600;
         }
 
         input,
         select {
             width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border);
+            padding: 12px;
+            border: 2px solid #e0e0e0;
             border-radius: 6px;
-            font-size: 1rem;
-            box-sizing: border-box;
-            transition: border-color 0.2s;
+            font-size: 14px;
+            transition: border-color 0.3s;
         }
 
         input:focus,
         select:focus {
             outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
         }
 
         button {
-            width: 100%;
-            padding: 0.75rem;
-            background-color: var(--primary);
-            color: white;
+            padding: 14px 20px;
             border: none;
             border-radius: 6px;
-            font-size: 1rem;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
-            margin-top: 1rem;
-        }
-
-        button:hover {
-            background-color: #1d4ed8;
-        }
-
-        button:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        .logs {
-            margin-top: 2rem;
-            border-top: 1px solid var(--border);
-            padding-top: 1rem;
-        }
-
-        .log-item {
-            padding: 0.75rem;
-            border-radius: 6px;
-            background: #f1f5f9;
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-            border-left: 4px solid var(--border);
-            animation: fadeIn 0.3s ease;
-        }
-
-        .log-item.info {
-            border-color: #94a3b8;
-        }
-
-        .log-item.pending {
-            border-color: #fbbf24;
-        }
-
-        .log-item.routing {
-            border-color: #3b82f6;
-        }
-
-        .log-item.building {
-            border-color: #8b5cf6;
-        }
-
-        .log-item.submitted {
-            border-color: #6366f1;
-        }
-
-        .log-item.confirmed {
-            border-color: var(--success);
-            background: #ecfdf5;
-        }
-
-        .log-item.failed,
-        .log-item.error {
-            border-color: var(--error);
-            background: #fef2f2;
-        }
-
-        .log-item.warning {
-            border-color: #f59e0b;
-            background: #fffbeb;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            transition: all 0.3s;
             text-transform: uppercase;
-            margin-bottom: 0.25rem;
+            letter-spacing: 0.5px;
         }
 
-        @keyframes fadeIn {
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .status-log {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .log-entry {
+            padding: 8px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            border-left: 4px solid;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
             from {
                 opacity: 0;
-                transform: translateY(5px);
+                transform: translateX(-20px);
             }
 
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateX(0);
             }
         }
 
-        .details {
+        .log-INFO {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+
+        .log-PENDING {
+            background: #fff3e0;
+            border-color: #ff9800;
+        }
+
+        .log-ROUTING {
+            background: #e1f5fe;
+            border-color: #03a9f4;
+        }
+
+        .log-BUILDING {
+            background: #f3e5f5;
+            border-color: #9c27b0;
+        }
+
+        .log-SUBMITTED {
+            background: #e8f5e9;
+            border-color: #4caf50;
+        }
+
+        .log-CONFIRMED {
+            background: #c8e6c9;
+            border-color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .log-FAILED {
+            background: #ffebee;
+            border-color: #c62828;
+            font-weight: bold;
+        }
+
+        .log-WARNING {
+            background: #fff9c4;
+            border-color: #f57f17;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .dex-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .dex-card {
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .dex-card.winner {
+            border-color: #27ae60;
+            background: #e8f5e9;
+        }
+
+        .dex-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .dex-price {
+            font-size: 1.5em;
+            color: #667eea;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .badge-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .queue-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+
+        .queue-bar {
+            background: #e0e0e0;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .queue-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .order-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .order-item {
+            background: #f8f9fa;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .order-id {
             font-family: monospace;
-            margin-top: 4px;
-            color: #64748b;
-            word-break: break-all;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .order-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .status-CONFIRMED {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .status-PENDING {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .status-ROUTING {
+            background: #e1f5fe;
+            color: #01579b;
+        }
+
+        .status-BUILDING {
+            background: #f3e5f5;
+            color: #4a148c;
+        }
+
+        .status-SUBMITTED {
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
+
+        .status-FAILED {
+            background: #ffebee;
+            color: #c62828;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>Order Execution</h1>
-        <form id="orderForm">
-            <div class="form-group">
-                <label>Input Token</label>
-                <input type="text" id="inputToken" value="SOL" required>
-            </div>
-            <div class="form-group">
-                <label>Output Token</label>
-                <input type="text" id="outputToken" value="USDC" required>
-            </div>
-            <div class="form-group">
-                <label>Amount</label>
-                <input type="number" id="amount" value="0.1" step="0.01" required>
-            </div>
-            <button type="submit" id="submitBtn">Execute Order</button>
-        </form>
+        <h1>🚀 Order Execution Engine - Testing Dashboard</h1>
 
-        <div class="logs" id="logs">
-            <!-- Logs will appear here -->
+        <div class="dashboard">
+            <!-- Order Submission Form -->
+            <div class="card">
+                <h2>📝 Submit Order</h2>
+                <form id="orderForm">
+                    <div class="form-group">
+                        <label for="inputToken">Input Token</label>
+                        <select id="inputToken">
+                            <option value="SOL">SOL (Solana)</option>
+                            <option value="USDC">USDC</option>
+                            <option value="USDT">USDT</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="outputToken">Output Token</label>
+                        <select id="outputToken">
+                            <option value="USDC">USDC</option>
+                            <option value="SOL">SOL (Solana)</option>
+                            <option value="USDT">USDT</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="amount">Amount</label>
+                        <input type="number" id="amount" step="0.01" value="0.1" required>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn-primary">Execute Order</button>
+                        <button type="button" class="btn-secondary" onclick="submitMultipleOrders()">Submit 5
+                            Orders</button>
+                    </div>
+                </form>
+
+                <div class="queue-info">
+                    <strong>Queue Status</strong>
+                    <div style="margin-top: 10px;">
+                        <div>Active Orders: <span id="activeOrders">0</span> / 10</div>
+                        <div>Rate Limit: <span id="rateLimit">0</span> / 100 per minute</div>
+                    </div>
+                    <div class="queue-bar">
+                        <div class="queue-fill" id="queueFill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="card">
+                <h2>📊 Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalOrders">0</div>
+                        <div class="stat-label">Total Orders</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="confirmedOrders">0</div>
+                        <div class="stat-label">Confirmed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="failedOrders">0</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="avgTime">0s</div>
+                        <div class="stat-label">Avg Time</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 25px; color: #667eea;">DEX Routing Comparison</h3>
+                <div class="dex-comparison" id="dexComparison">
+                    <div class="dex-card">
+                        <div class="dex-name">🔷 Raydium</div>
+                        <div class="dex-price">--</div>
+                        <div style="margin-top: 5px; font-size: 0.9em; color: #666;">Last Quote</div>
+                    </div>
+                    <div class="dex-card">
+                        <div class="dex-name">🌊 Meteora</div>
+                        <div class="dex-price">--</div>
+                        <div style="margin-top: 5px; font-size: 0.9em; color: #666;">Last Quote</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Status Updates -->
+            <div class="card full-width">
+                <h2>📡 Real-time Status Updates (WebSocket)</h2>
+                <div class="status-log" id="statusLog">
+                    <div class="log-entry log-INFO">
+                        <strong>INFO:</strong> Ready to submit orders. WebSocket will connect automatically.
+                    </div>
+                </div>
+                <div class="button-group" style="margin-top: 15px;">
+                    <button class="btn-secondary" onclick="clearLog()">Clear Log</button>
+                    <button class="btn-danger" onclick="testConcurrency()">Test Concurrency (10 orders)</button>
+                </div>
+            </div>
+
+            <!-- Recent Orders -->
+            <div class="card full-width">
+                <h2>📋 Recent Orders</h2>
+                <div class="order-list" id="orderList">
+                    <div style="text-align: center; color: #999; padding: 20px;">
+                        No orders yet. Submit an order to get started!
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        const form = document.getElementById('orderForm');
-        const submitBtn = document.getElementById('submitBtn');
-        const logsContainer = document.getElementById('logs');
         let ws = null;
-        let wsTimeout = null;
+        let activeOrders = new Map();
+        let orderStats = {
+            total: 0,
+            confirmed: 0,
+            failed: 0,
+            times: []
+        };
+        let lastDexQuotes = { raydium: null, meteora: null };
 
-        function addLog(status, data) {
-            console.log('[LOG]', status, data);
-            const div = document.createElement('div');
-            div.className = `log-item ${status.toLowerCase()}`;
+        // Add log entry
+        function addLog(status, message, data = {}) {
+            const log = document.getElementById('statusLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${status}`;
 
-            const badge = document.createElement('div');
-            badge.className = 'status-badge';
-            badge.textContent = status;
-            div.appendChild(badge);
-
-            if (data) {
-                const details = document.createElement('div');
-                details.className = 'details';
-                // Format details nicely
-                if (data.orderId) details.innerHTML += `Order ID: ${data.orderId.substring(0, 8)}...<br>`;
-                if (data.message) details.innerHTML += `${data.message}<br>`;
-                if (data.txHash) details.innerHTML += `Tx: ${data.txHash}<br>`;
-                if (data.price) details.innerHTML += `Price: ${data.price}<br>`;
-                if (data.dex) details.innerHTML += `DEX: ${data.dex}<br>`;
-                if (data.error) details.innerHTML += `Error: ${data.error}<br>`;
-                div.appendChild(details);
+            let content = `<strong>${status}:</strong> ${message}`;
+            if (data.orderId) {
+                content += ` <span class="order-id">[${data.orderId.substring(0, 8)}...]</span>`;
+            }
+            if (data.dex) {
+                content += ` <span style="color: #667eea;">[${data.dex}]</span>`;
+            }
+            if (data.price) {
+                content += ` <span style="color: #27ae60;">Price: ${data.price}</span>`;
+            }
+            if (data.txHash) {
+                content += ` <span style="color: #2196f3;">TX: ${data.txHash}</span>`;
             }
 
-            logsContainer.prepend(div);
-        }
+            entry.innerHTML = content;
+            log.insertBefore(entry, log.firstChild);
 
-        function cleanupWebSocket() {
-            if (wsTimeout) {
-                clearTimeout(wsTimeout);
-                wsTimeout = null;
-            }
-            if (ws) {
-                ws.close();
-                ws = null;
+            // Keep only last 50 entries
+            while (log.children.length > 50) {
+                log.removeChild(log.lastChild);
             }
         }
 
-        function resetForm() {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Execute Order';
+        function clearLog() {
+            const log = document.getElementById('statusLog');
+            log.innerHTML = '<div class="log-entry log-INFO"><strong>INFO:</strong> Log cleared.</div>';
         }
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Processing...';
-            logsContainer.innerHTML = ''; // Clear previous logs
+        // Update statistics
+        function updateStats() {
+            document.getElementById('totalOrders').textContent = orderStats.total;
+            document.getElementById('confirmedOrders').textContent = orderStats.confirmed;
+            document.getElementById('failedOrders').textContent = orderStats.failed;
 
-            cleanupWebSocket();
+            if (orderStats.times.length > 0) {
+                const avg = orderStats.times.reduce((a, b) => a + b, 0) / orderStats.times.length;
+                document.getElementById('avgTime').textContent = avg.toFixed(1) + 's';
+            }
 
-            const payload = {
-                inputToken: document.getElementById('inputToken').value,
-                outputToken: document.getElementById('outputToken').value,
-                amount: parseFloat(document.getElementById('amount').value)
+            // Update queue visualization
+            const activeCount = activeOrders.size;
+            document.getElementById('activeOrders').textContent = activeCount;
+            document.getElementById('queueFill').style.width = (activeCount / 10 * 100) + '%';
+        }
+
+        // Update DEX comparison
+        function updateDexComparison(dex, price) {
+            lastDexQuotes[dex.toLowerCase()] = price;
+
+            const raydiumCard = document.querySelector('.dex-comparison .dex-card:nth-child(1)');
+            const meteoraCard = document.querySelector('.dex-comparison .dex-card:nth-child(2)');
+
+            if (lastDexQuotes.raydium !== null) {
+                raydiumCard.querySelector('.dex-price').textContent = '$' + lastDexQuotes.raydium;
+            }
+            if (lastDexQuotes.meteora !== null) {
+                meteoraCard.querySelector('.dex-price').textContent = '$' + lastDexQuotes.meteora;
+            }
+
+            // Highlight winner
+            raydiumCard.classList.remove('winner');
+            meteoraCard.classList.remove('winner');
+
+            if (lastDexQuotes.raydium !== null && lastDexQuotes.meteora !== null) {
+                if (lastDexQuotes.raydium > lastDexQuotes.meteora) {
+                    raydiumCard.classList.add('winner');
+                } else if (lastDexQuotes.meteora > lastDexQuotes.raydium) {
+                    meteoraCard.classList.add('winner');
+                }
+            } else if (dex === 'RAYDIUM') {
+                raydiumCard.classList.add('winner');
+            } else if (dex === 'METEORA') {
+                meteoraCard.classList.add('winner');
+            }
+        }
+
+        // Add order to recent list
+        function addOrderToList(orderId, status, data = {}) {
+            const orderList = document.getElementById('orderList');
+
+            // Remove "no orders" message
+            if (orderList.querySelector('div[style*="text-align: center"]')) {
+                orderList.innerHTML = '';
+            }
+
+            let orderItem = document.getElementById('order-' + orderId);
+            if (!orderItem) {
+                orderItem = document.createElement('div');
+                orderItem.id = 'order-' + orderId;
+                orderItem.className = 'order-item';
+                orderList.insertBefore(orderItem, orderList.firstChild);
+            }
+
+            let content = `
+                <div class="order-id">Order ID: ${orderId}</div>
+                <div><span class="order-status status-${status}">${status}</span></div>
+            `;
+
+            if (data.dex) {
+                content += `<div style="margin-top: 5px;">DEX: <strong>${data.dex}</strong></div>`;
+            }
+            if (data.price) {
+                content += `<div>Price: <strong>$${data.price}</strong></div>`;
+            }
+            if (data.txHash) {
+                content += `<div>TX: <code style="font-size: 0.85em;">${data.txHash}</code></div>`;
+            }
+
+            orderItem.innerHTML = content;
+
+            // Keep only last 20 orders
+            while (orderList.children.length > 20) {
+                orderList.removeChild(orderList.lastChild);
+            }
+        }
+
+        // Connect WebSocket
+        function connectWebSocket(orderId) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ orderId }));
+                return;
+            }
+
+            ws = new WebSocket(`ws://${window.location.host}/api/orders/ws`);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                addLog('INFO', 'WebSocket connected');
+                ws.send(JSON.stringify({ orderId }));
             };
 
-            try {
-                addLog('INFO', { message: 'Submitting order...' });
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log('WebSocket message received:', data);
 
-                // 1. Submit Order
-                const res = await fetch('/api/orders/execute', {
+                const status = data.status || data.data?.status;
+                const orderId = data.orderId;
+
+                if (status === 'ROUTING') {
+                    addLog('ROUTING', 'Finding best DEX price...', { orderId });
+                    addOrderToList(orderId, status);
+                } else if (status === 'BUILDING') {
+                    const dex = data.data?.dex || data.dex;
+                    const price = data.data?.price || data.price;
+                    addLog('BUILDING', `Building transaction on ${dex}`, { orderId, dex, price });
+                    updateDexComparison(dex, price);
+                    addOrderToList(orderId, status, { dex, price });
+                } else if (status === 'SUBMITTED') {
+                    addLog('SUBMITTED', 'Transaction submitted to network', { orderId });
+                    addOrderToList(orderId, status);
+                } else if (status === 'CONFIRMED') {
+                    const txHash = data.data?.txHash || data.txHash;
+                    const price = data.data?.price || data.price;
+                    addLog('CONFIRMED', 'Order completed successfully!', { orderId, txHash, price });
+                    addOrderToList(orderId, status, { txHash, price });
+
+                    if (activeOrders.has(orderId)) {
+                        const startTime = activeOrders.get(orderId);
+                        const duration = (Date.now() - startTime) / 1000;
+                        orderStats.times.push(duration);
+                        activeOrders.delete(orderId);
+                    }
+                    orderStats.confirmed++;
+                    updateStats();
+                } else if (status === 'FAILED') {
+                    const error = data.data?.error || data.error;
+                    addLog('FAILED', `Order failed: ${error}`, { orderId });
+                    addOrderToList(orderId, status, { error });
+
+                    activeOrders.delete(orderId);
+                    orderStats.failed++;
+                    updateStats();
+                } else if (status === 'PENDING') {
+                    addLog('PENDING', 'Order submitted to queue', { orderId });
+                    addOrderToList(orderId, status);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                addLog('WARNING', 'WebSocket connection error');
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket closed');
+                addLog('WARNING', 'Connection closed unexpectedly');
+            };
+        }
+
+        // Submit order
+        document.getElementById('orderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const inputToken = document.getElementById('inputToken').value;
+            const outputToken = document.getElementById('outputToken').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+
+            if (inputToken === outputToken) {
+                addLog('WARNING', 'Input and output tokens must be different');
+                return;
+            }
+
+            addLog('INFO', `Submitting order: ${amount} ${inputToken} → ${outputToken}`);
+
+            try {
+                const response = await fetch('/api/orders/execute', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ inputToken, outputToken, amount })
                 });
 
-                if (!res.ok) {
-                    const errorText = await res.text();
-                    throw new Error(`API Error: ${errorText}`);
-                }
+                const data = await response.json();
+                const orderId = data.orderId;
 
-                const { orderId, status } = await res.json();
-                console.log('Order created:', orderId, status);
-                addLog('PENDING', { orderId: orderId, message: 'Order submitted to queue' });
+                addLog('PENDING', `Order created: ${orderId}`, { orderId });
 
-                // 2. Connect WebSocket
-                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-                const wsUrl = `${protocol}//${window.location.host}/api/orders/ws`;
-                console.log('Connecting to WebSocket:', wsUrl);
+                activeOrders.set(orderId, Date.now());
+                orderStats.total++;
+                updateStats();
 
-                ws = new WebSocket(wsUrl);
+                connectWebSocket(orderId);
 
-                // Timeout after 30 seconds
-                wsTimeout = setTimeout(() => {
-                    console.warn('WebSocket timeout - order may still be processing');
-                    addLog('WARNING', { message: 'Connection timeout. Check order status manually.' });
-                    resetForm();
-                    cleanupWebSocket();
-                }, 30000);
-
-                ws.onopen = () => {
-                    console.log('WebSocket connected');
-                    const subscribeMsg = JSON.stringify({ orderId });
-                    console.log('Sending subscribe message:', subscribeMsg);
-                    ws.send(subscribeMsg);
-                };
-
-                ws.onmessage = (event) => {
-                    console.log('WebSocket message received:', event.data);
-                    try {
-                        const msg = JSON.parse(event.data);
-                        console.log('Parsed message:', msg);
-
-                        // Parse data if it's a string (logs field from DB might be stringified JSON)
-                        let details = msg.data;
-                        if (typeof details === 'string') {
-                            try {
-                                details = JSON.parse(details);
-                            } catch (e) {
-                                console.log('Could not parse data as JSON:', details);
-                            }
-                        }
-
-                        // Merge msg properties with details
-                        const logData = { ...msg, ...details };
-                        addLog(msg.status, logData);
-
-                        if (msg.status === 'CONFIRMED' || msg.status === 'FAILED') {
-                            console.log('Order completed with status:', msg.status);
-                            resetForm();
-                            cleanupWebSocket();
-                        }
-                    } catch (err) {
-                        console.error('Error parsing WebSocket message:', err);
-                    }
-                };
-
-                ws.onerror = (err) => {
-                    console.error('WebSocket error:', err);
-                    addLog('ERROR', { error: 'WebSocket connection error' });
-                    resetForm();
-                };
-
-                ws.onclose = (event) => {
-                    console.log('WebSocket closed:', event.code, event.reason);
-                    if (event.code !== 1000) {
-                        addLog('WARNING', { message: 'Connection closed unexpectedly' });
-                    }
-                };
-
-            } catch (err) {
-                console.error('Error:', err);
-                addLog('FAILED', { error: err.message });
-                resetForm();
-                cleanupWebSocket();
+            } catch (error) {
+                addLog('FAILED', `Error: ${error.message}`);
             }
         });
+
+        // Submit multiple orders
+        async function submitMultipleOrders() {
+            const count = 5;
+            addLog('INFO', `Submitting ${count} orders concurrently...`);
+
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    document.getElementById('amount').value = (Math.random() * 0.5 + 0.1).toFixed(2);
+                    document.getElementById('orderForm').dispatchEvent(new Event('submit'));
+                }, i * 200);
+            }
+        }
+
+        // Test concurrency
+        async function testConcurrency() {
+            const count = 10;
+            addLog('INFO', `🚀 Testing concurrency with ${count} orders...`);
+
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    document.getElementById('amount').value = (Math.random() * 1 + 0.1).toFixed(2);
+                    document.getElementById('orderForm').dispatchEvent(new Event('submit'));
+                }, i * 100);
+            }
+        }
+
+        // Initialize
+        updateStats();
     </script>
 </body>
 
