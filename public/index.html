@@ -623,7 +623,9 @@
                 return;
             }
 
-            ws = new WebSocket(`ws://${window.location.host}/api/orders/ws`);
+            // Use wss:// for HTTPS, ws:// for HTTP
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/api/orders/ws`);
 
             ws.onopen = () => {
                 console.log('WebSocket connected');
