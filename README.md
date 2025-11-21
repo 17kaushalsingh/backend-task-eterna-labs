@@ -75,3 +75,30 @@ Run the end-to-end test script:
 ```bash
 npm run test:e2e
 ```
+
+## 🚀 Deployment
+
+### Deploy to Render (Free)
+This project includes a Render Blueprint for one-click deployment:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+
+**Or manually:**
+1. Fork/clone this repository
+2. Sign up at [render.com](https://render.com)
+3. Create new Blueprint
+4. Connect your GitHub repository
+5. Render will automatically detect `render.yaml`
+6. Add `PRIVATE_KEY` environment variable
+7. Deploy!
+
+**Detailed Guide:** See [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md)
+
+### Live Demo
+🔗 **[View Live Demo](https://order-execution-engine.onrender.com)** *(Coming soon)*
+
+## 📚 Documentation
+- **[FEATURE_TESTING_GUIDE.md](./FEATURE_TESTING_GUIDE.md)** - Complete feature testing guide
+- **[QUICKSTART.md](./QUICKSTART.md)** - Quick start guide with examples
+- **[TESTING.md](./TESTING.md)** - Detailed testing scenarios
+- **[RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md)** - Render deployment guide

@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
+    "start": "node dist/api/server.js & node dist/worker/start.js & wait -n",
     "start:api": "ts-node src/api/server.ts",
     "start:worker": "ts-node src/worker/start.ts",
     "test:e2e": "ts-node scripts/test-execution.ts",

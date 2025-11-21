@@ -1,0 +1,50 @@
+services:
+  # Redis Cache (Free tier)
+  - type: redis
+    name: order-engine-redis
+    plan: free
+    region: oregon
+    maxmemoryPolicy: noeviction
+    ipAllowList: []
+
+  # Main Application (API + Worker combined)
+  - type: web
+    name: order-execution-engine
+    runtime: node
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && node dist/api/server.js & node dist/worker/start.js & wait -n
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: order-engine-db
+          property: connectionString
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: order-engine-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: order-engine-redis
+          property: port
+      - key: SOLANA_RPC_URL
+        value: https://api.devnet.solana.com
+      - key: PRIVATE_KEY
+        sync: false
+    autoDeploy: true
+
+databases:
+  - name: order-engine-db
+    databaseName: order_engine
+    user: orderengine
+    plan: free
+    region: oregon
