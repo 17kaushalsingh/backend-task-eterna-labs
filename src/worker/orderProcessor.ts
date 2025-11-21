@@ -15,8 +15,6 @@ const redisConnection = {
     port: parseInt(process.env.REDIS_PORT || '6379'),
 };
 
-const pubClient = new Redis(redisConnection); // Added pubClient initialization
-
 // Mock function to simulate WebSocket updates (will be replaced by actual WS logic)
 const updateStatus = async (orderId: string, status: string, data?: any) => {
     console.log(`[Order ${orderId}] Status: ${status}`, data || '');
@@ -74,6 +72,8 @@ const processOrder = async (job: Job) => {
     }
 };
 
+console.log('Initializing Worker with Redis:', redisConnection);
+
 export const orderWorker = new Worker('order-execution', processOrder, {
     connection: redisConnection,
     concurrency: 10, // Requirement: Queue system managing up to 10 concurrent orders
@@ -81,6 +81,10 @@ export const orderWorker = new Worker('order-execution', processOrder, {
         max: 100, // Requirement: Process 100 orders/minute
         duration: 60000
     }
+});
+
+orderWorker.on('ready', () => {
+    console.log('Worker is ready and connected to Redis');
 });
 
 orderWorker.on('completed', job => {

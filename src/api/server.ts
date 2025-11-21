@@ -48,7 +48,7 @@ fastify.register(async function (fastify) {
         console.log('Client connected to WebSocket');
 
         // Expect client to send orderId to subscribe
-        connection.socket.on('message', async (message) => {
+        connection.socket.on('message', async (message: any) => {
             try {
                 const { orderId } = JSON.parse(message.toString());
                 if (orderId) {

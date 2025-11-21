@@ -4,6 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "tsc",
+    "start:api": "ts-node src/api/server.ts",
+    "start:worker": "ts-node src/worker/start.ts",
+    "test:e2e": "ts-node scripts/test-execution.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -22,7 +26,7 @@
     "@fastify/cors": "^11.1.0",
     "@fastify/websocket": "^11.2.0",
     "@meteora-ag/dlmm": "^1.8.0",
-    "@prisma/client": "^7.0.0",
+    "@prisma/client": "^5.10.2",
     "@raydium-io/raydium-sdk-v2": "^0.2.30-alpha",
     "@solana/spl-token": "^0.4.14",
     "@solana/web3.js": "^1.98.4",
@@ -33,6 +37,11 @@
     "fastify": "^5.6.2",
     "ioredis": "^5.8.2",
     "pg": "^8.16.3",
+    "prisma": "^5.10.2",
     "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   }
 }
