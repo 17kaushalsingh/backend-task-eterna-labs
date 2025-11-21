@@ -4,6 +4,8 @@ import cors from '@fastify/cors';
 import { PrismaClient } from '@prisma/client';
 import { orderQueue } from '../queue/orderQueue';
 import { subClient } from '../utils/redis';
+import fastifyStatic from '@fastify/static';
+import path from 'path';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -13,6 +15,10 @@ const prisma = new PrismaClient();
 
 fastify.register(cors);
 fastify.register(websocket);
+fastify.register(fastifyStatic, {
+    root: path.join(__dirname, '../../public'),
+    prefix: '/', // optional: default '/'
+});
 
 // POST /api/orders/execute
 fastify.post('/api/orders/execute', async (request, reply) => {

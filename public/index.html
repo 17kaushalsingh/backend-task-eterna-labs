@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Execution Engine</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            /* Blue */
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 480px;
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .logs {
+            margin-top: 2rem;
+            border-top: 1px solid var(--border);
+            padding-top: 1rem;
+        }
+
+        .log-item {
+            padding: 0.75rem;
+            border-radius: 6px;
+            background: #f1f5f9;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            border-left: 4px solid var(--border);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .log-item.info {
+            border-color: #94a3b8;
+        }
+
+        .log-item.pending {
+            border-color: #fbbf24;
+        }
+
+        .log-item.routing {
+            border-color: #3b82f6;
+        }
+
+        .log-item.building {
+            border-color: #8b5cf6;
+        }
+
+        .log-item.submitted {
+            border-color: #6366f1;
+        }
+
+        .log-item.confirmed {
+            border-color: var(--success);
+            background: #ecfdf5;
+        }
+
+        .log-item.failed,
+        .log-item.error {
+            border-color: var(--error);
+            background: #fef2f2;
+        }
+
+        .log-item.warning {
+            border-color: #f59e0b;
+            background: #fffbeb;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.25rem;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .details {
+            font-family: monospace;
+            margin-top: 4px;
+            color: #64748b;
+            word-break: break-all;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Order Execution</h1>
+        <form id="orderForm">
+            <div class="form-group">
+                <label>Input Token</label>
+                <input type="text" id="inputToken" value="SOL" required>
+            </div>
+            <div class="form-group">
+                <label>Output Token</label>
+                <input type="text" id="outputToken" value="USDC" required>
+            </div>
+            <div class="form-group">
+                <label>Amount</label>
+                <input type="number" id="amount" value="0.1" step="0.01" required>
+            </div>
+            <button type="submit" id="submitBtn">Execute Order</button>
+        </form>
+
+        <div class="logs" id="logs">
+            <!-- Logs will appear here -->
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('orderForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const logsContainer = document.getElementById('logs');
+        let ws = null;
+        let wsTimeout = null;
+
+        function addLog(status, data) {
+            console.log('[LOG]', status, data);
+            const div = document.createElement('div');
+            div.className = `log-item ${status.toLowerCase()}`;
+
+            const badge = document.createElement('div');
+            badge.className = 'status-badge';
+            badge.textContent = status;
+            div.appendChild(badge);
+
+            if (data) {
+                const details = document.createElement('div');
+                details.className = 'details';
+                // Format details nicely
+                if (data.orderId) details.innerHTML += `Order ID: ${data.orderId.substring(0, 8)}...<br>`;
+                if (data.message) details.innerHTML += `${data.message}<br>`;
+                if (data.txHash) details.innerHTML += `Tx: ${data.txHash}<br>`;
+                if (data.price) details.innerHTML += `Price: ${data.price}<br>`;
+                if (data.dex) details.innerHTML += `DEX: ${data.dex}<br>`;
+                if (data.error) details.innerHTML += `Error: ${data.error}<br>`;
+                div.appendChild(details);
+            }
+
+            logsContainer.prepend(div);
+        }
+
+        function cleanupWebSocket() {
+            if (wsTimeout) {
+                clearTimeout(wsTimeout);
+                wsTimeout = null;
+            }
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+
+        function resetForm() {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Execute Order';
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+            logsContainer.innerHTML = ''; // Clear previous logs
+
+            cleanupWebSocket();
+
+            const payload = {
+                inputToken: document.getElementById('inputToken').value,
+                outputToken: document.getElementById('outputToken').value,
+                amount: parseFloat(document.getElementById('amount').value)
+            };
+
+            try {
+                addLog('INFO', { message: 'Submitting order...' });
+
+                // 1. Submit Order
+                const res = await fetch('/api/orders/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(`API Error: ${errorText}`);
+                }
+
+                const { orderId, status } = await res.json();
+                console.log('Order created:', orderId, status);
+                addLog('PENDING', { orderId: orderId, message: 'Order submitted to queue' });
+
+                // 2. Connect WebSocket
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/api/orders/ws`;
+                console.log('Connecting to WebSocket:', wsUrl);
+
+                ws = new WebSocket(wsUrl);
+
+                // Timeout after 30 seconds
+                wsTimeout = setTimeout(() => {
+                    console.warn('WebSocket timeout - order may still be processing');
+                    addLog('WARNING', { message: 'Connection timeout. Check order status manually.' });
+                    resetForm();
+                    cleanupWebSocket();
+                }, 30000);
+
+                ws.onopen = () => {
+                    console.log('WebSocket connected');
+                    const subscribeMsg = JSON.stringify({ orderId });
+                    console.log('Sending subscribe message:', subscribeMsg);
+                    ws.send(subscribeMsg);
+                };
+
+                ws.onmessage = (event) => {
+                    console.log('WebSocket message received:', event.data);
+                    try {
+                        const msg = JSON.parse(event.data);
+                        console.log('Parsed message:', msg);
+
+                        // Parse data if it's a string (logs field from DB might be stringified JSON)
+                        let details = msg.data;
+                        if (typeof details === 'string') {
+                            try {
+                                details = JSON.parse(details);
+                            } catch (e) {
+                                console.log('Could not parse data as JSON:', details);
+                            }
+                        }
+
+                        // Merge msg properties with details
+                        const logData = { ...msg, ...details };
+                        addLog(msg.status, logData);
+
+                        if (msg.status === 'CONFIRMED' || msg.status === 'FAILED') {
+                            console.log('Order completed with status:', msg.status);
+                            resetForm();
+                            cleanupWebSocket();
+                        }
+                    } catch (err) {
+                        console.error('Error parsing WebSocket message:', err);
+                    }
+                };
+
+                ws.onerror = (err) => {
+                    console.error('WebSocket error:', err);
+                    addLog('ERROR', { error: 'WebSocket connection error' });
+                    resetForm();
+                };
+
+                ws.onclose = (event) => {
+                    console.log('WebSocket closed:', event.code, event.reason);
+                    if (event.code !== 1000) {
+                        addLog('WARNING', { message: 'Connection closed unexpectedly' });
+                    }
+                };
+
+            } catch (err) {
+                console.error('Error:', err);
+                addLog('FAILED', { error: err.message });
+                resetForm();
+                cleanupWebSocket();
+            }
+        });
+    </script>
+</body>
+
+</html>

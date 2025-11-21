@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(redis-cli:*)",
+      "Bash(curl:*)",
+      "Bash(lsof:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(chmod:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
