@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { DexRouter } from '../dex/router';
 import { connection, getWallet } from '../utils/solana';
 import { QuoteRequest } from '../dex/types';
+import { pubClient } from '../utils/redis';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -14,9 +15,15 @@ const redisConnection = {
     port: parseInt(process.env.REDIS_PORT || '6379'),
 };
 
+const pubClient = new Redis(redisConnection); // Added pubClient initialization
+
 // Mock function to simulate WebSocket updates (will be replaced by actual WS logic)
 const updateStatus = async (orderId: string, status: string, data?: any) => {
     console.log(`[Order ${orderId}] Status: ${status}`, data || '');
+
+    const payload = { orderId, status, data };
+    await pubClient.publish(`order-updates:${orderId}`, JSON.stringify(payload));
+
     // In a real app, we would publish to Redis Pub/Sub here for the WS server to pick up
     await prisma.order.update({
         where: { id: orderId },
