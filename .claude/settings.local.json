@@ -5,7 +5,8 @@
       "Bash(curl:*)",
       "Bash(lsof:*)",
       "Bash(npx ts-node:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(docker-compose ps:*)"
     ],
     "deny": [],
     "ask": []
