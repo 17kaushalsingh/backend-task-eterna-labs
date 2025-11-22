@@ -6,7 +6,9 @@
       "Bash(lsof:*)",
       "Bash(npx ts-node:*)",
       "Bash(chmod:*)",
-      "Bash(docker-compose ps:*)"
+      "Bash(docker-compose ps:*)",
+      "Bash(xargs cat:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

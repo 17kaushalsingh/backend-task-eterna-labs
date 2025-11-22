@@ -60,32 +60,51 @@ fastify.register(async function (fastify) {
                 if (orderId) {
                     console.log(`Subscribing to updates for order ${orderId}`);
 
+                    // CRITICAL FIX: Get current status FIRST, before subscribing
+                    // This ensures we send the most recent state to the client
+                    const order = await prisma.order.findUnique({
+                        where: { id: orderId },
+                        select: { status: true, txHash: true, logs: true }
+                    });
+
+                    if (!order) {
+                        connection.send(JSON.stringify({ orderId, error: 'Order not found' }));
+                        return;
+                    }
+
                     // Subscribe to Redis channel for this order
                     const channel = `order-updates:${orderId}`;
-                    const subscriber = subClient.duplicate(); // Create a new subscriber for this connection (or manage globally)
+                    const subscriber = subClient.duplicate();
 
+                    await subscriber.connect();
                     await subscriber.subscribe(channel);
 
                     subscriber.on('message', (ch, msg) => {
                         if (ch === channel) {
+                            console.log(`Forwarding update to client for order ${orderId}`);
                             connection.send(msg);
                         }
                     });
 
-                    // Send current status immediately
-                    const order = await prisma.order.findUnique({ where: { id: orderId } });
-                    if (order) {
-                        connection.send(JSON.stringify({ orderId, status: order.status, txHash: order.txHash }));
-                    }
+                    // Send current status with full history after subscribing
+                    // This prevents race condition where updates come in before initial send
+                    connection.send(JSON.stringify({
+                        orderId,
+                        status: order.status,
+                        txHash: order.txHash,
+                        logs: order.logs
+                    }));
 
                     // Cleanup on close
                     connection.on('close', () => {
+                        console.log(`Client disconnected from order ${orderId}`);
                         subscriber.unsubscribe();
                         subscriber.quit();
                     });
                 }
             } catch (e) {
                 console.error('WebSocket message error:', e);
+                connection.send(JSON.stringify({ error: 'Failed to subscribe to order updates' }));
             }
         });
     });

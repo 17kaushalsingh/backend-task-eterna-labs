@@ -4,33 +4,62 @@ import { DexRouter } from '../dex/router';
 import { connection, getWallet } from '../utils/solana';
 import { QuoteRequest } from '../dex/types';
 import { pubClient } from '../utils/redis';
+import IORedis from 'ioredis';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const prisma = new PrismaClient();
 const router = new DexRouter();
-const redisConnection = {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379'),
+
+const getRedisConnection = () => {
+    // Use REDIS_URL if available (Render provides this with TLS and auth)
+    if (process.env.REDIS_URL) {
+        return new IORedis(process.env.REDIS_URL, { maxRetriesPerRequest: null });
+    }
+    // Fallback to host/port for local development
+    return new IORedis({
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+        maxRetriesPerRequest: null,
+    });
 };
 
 // Mock function to simulate WebSocket updates (will be replaced by actual WS logic)
 const updateStatus = async (orderId: string, status: string, data?: any) => {
     console.log(`[Order ${orderId}] Status: ${status}`, data || '');
 
-    const payload = { orderId, status, data };
-    await pubClient.publish(`order-updates:${orderId}`, JSON.stringify(payload));
+    try {
+        // CRITICAL: Update DB FIRST, then publish to Redis
+        // This ensures data consistency - if DB fails, Redis never gets the wrong state
+        const order = await prisma.order.findUnique({
+            where: { id: orderId },
+            select: { logs: true }
+        });
 
-    // In a real app, we would publish to Redis Pub/Sub here for the WS server to pick up
-    await prisma.order.update({
-        where: { id: orderId },
-        data: {
-            status,
-            logs: data ? [JSON.stringify(data)] : undefined,
-            txHash: data?.txHash
-        },
-    });
+        const currentLogs = Array.isArray(order?.logs) ? order.logs : [];
+        const newLog = data ? JSON.stringify({ status, timestamp: new Date().toISOString(), ...data }) : JSON.stringify({ status, timestamp: new Date().toISOString() });
+
+        await prisma.order.update({
+            where: { id: orderId },
+            data: {
+                status,
+                logs: [...currentLogs, newLog],
+                txHash: data?.txHash || undefined
+            },
+        });
+
+        // Only publish to Redis if DB update succeeded
+        const payload = { orderId, status, data };
+        await pubClient.publish(`order-updates:${orderId}`, JSON.stringify(payload));
+
+        console.log(`[Order ${orderId}] Status updated successfully in DB and published to Redis`);
+    } catch (error: any) {
+        console.error(`[Order ${orderId}] CRITICAL: Failed to update status to ${status}:`, error.message);
+        // Don't throw - let the calling function handle the error
+        // This prevents recursive error handling issues
+        throw new Error(`Status update failed for order ${orderId}: ${error.message}`);
+    }
 };
 
 const processOrder = async (job: Job) => {
@@ -72,7 +101,8 @@ const processOrder = async (job: Job) => {
     }
 };
 
-console.log('Initializing Worker with Redis:', redisConnection);
+const redisConnection = getRedisConnection();
+console.log('Initializing Worker with Redis connection');
 
 export const orderWorker = new Worker('order-execution', processOrder, {
     connection: redisConnection,
@@ -80,17 +110,33 @@ export const orderWorker = new Worker('order-execution', processOrder, {
     limiter: {
         max: 100, // Requirement: Process 100 orders/minute
         duration: 60000
+    },
+    settings: {
+        // Add retry configuration for failed jobs
+        backoffStrategy: (attemptsMade: number) => {
+            // Exponential backoff: 1s, 2s, 4s, 8s, 16s
+            return Math.min(Math.pow(2, attemptsMade) * 1000, 30000);
+        }
     }
 });
 
 orderWorker.on('ready', () => {
-    console.log('Worker is ready and connected to Redis');
+    console.log('✅ Worker is ready and connected to Redis');
 });
 
 orderWorker.on('completed', job => {
-    console.log(`Job ${job.id} has completed!`);
+    console.log(`✅ Job ${job.id} has completed!`);
 });
 
 orderWorker.on('failed', (job, err) => {
-    console.log(`Job ${job?.id} has failed with ${err.message}`);
+    console.error(`❌ Job ${job?.id} has failed with ${err.message}`);
+    console.error('Job data:', job?.data);
+});
+
+orderWorker.on('error', err => {
+    console.error('❌ Worker error:', err);
+});
+
+orderWorker.on('stalled', (jobId) => {
+    console.warn(`⚠️  Job ${jobId} has stalled`);
 });

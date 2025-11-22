@@ -26,16 +26,11 @@ services:
         fromDatabase:
           name: order-engine-db
           property: connectionString
-      - key: REDIS_HOST
+      - key: REDIS_URL
         fromService:
           type: redis
           name: order-engine-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: order-engine-redis
-          property: port
+          property: connectionString
       - key: SOLANA_RPC_URL
         value: https://api.devnet.solana.com
       - key: PRIVATE_KEY
